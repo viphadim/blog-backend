@@ -5,7 +5,7 @@ from app.features.users.crud import create_user, authenticate_user,get_all_users
 from app.features.users.schemas import UserCreate, UserRead, Token,UserResponse,updateUserRequest
 from app.core.security import create_access_token
 from typing import List
-from app.features.utilities.baseResponse import BaseResponse
+from app.utilities.baseResponse import BaseResponse
 from datetime import datetime
 
 router = APIRouter(prefix="/users", tags=["user"])
