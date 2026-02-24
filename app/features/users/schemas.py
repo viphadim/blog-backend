@@ -42,8 +42,8 @@ class UserResponse(BaseModel):
     phone_number: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    class Config:
-        orm_mode = True
+    
+    model_config = {"from_attributes": True} 
 
 class Token(BaseModel):
     access_token: str

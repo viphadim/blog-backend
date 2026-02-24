@@ -2,37 +2,19 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.dependencies import get_db
 from app.features.users.crud import create_user, authenticate_user,get_all_users,get_user_by_id,update_user_imp,delete_user_imp
-from app.features.users.schemas import UserCreate, UserRead, Token,UserResponse,updateUserRequest
-from app.core.security import create_access_token
+from app.features.users.schemas import UserResponse,updateUserRequest
 from typing import List
 from app.utilities.baseResponse import BaseResponse
 from datetime import datetime
+from app.core.dependencies import get_current_user
+from uuid import UUID
+from fastapi.security import OAuth2PasswordBearer
 
-router = APIRouter(prefix="/users", tags=["user"])
-
-@router.post("/register", response_model=BaseResponse[UserResponse])
-async def register_user(
-    user: UserCreate,
-    db: AsyncSession = Depends(get_db)
-):
-    new_user = await create_user(
-        db,
-        first_name=user.first_name,
-        last_name=user.last_name,
-        email=user.email,
-        phone_number=user.phone_number
-    )
-    return BaseResponse(
-        success=True,
-        status_code=200,
-        message="Create user successfully",
-        timestamp=datetime.now(),
-        data=new_user,
-        
-    )
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
+router = APIRouter(prefix="", tags=["User"])
 
 
-@router.get("", response_model=BaseResponse[list[UserResponse]])
+@router.get("/users", response_model=BaseResponse[list[UserResponse]])
 async def get_users(db: AsyncSession = Depends(get_db)):
     users = await get_all_users(db)
     
@@ -48,7 +30,7 @@ async def get_users(db: AsyncSession = Depends(get_db)):
         
     )
 
-@router.get("/{id}", response_model=BaseResponse[UserResponse])
+@router.get("user/{id}", response_model=BaseResponse[UserResponse])
 async def get_specific_user(id: str, db: AsyncSession = Depends(get_db)):
     user = await get_user_by_id(db, id)
     return BaseResponse(
@@ -61,7 +43,7 @@ async def get_specific_user(id: str, db: AsyncSession = Depends(get_db)):
     )
 
 
-@router.put("/{id}", response_model=BaseResponse[UserResponse])
+@router.put("/user/{id}", response_model=BaseResponse[UserResponse])
 async def update_user_endpoint(
     id: str,
     user: updateUserRequest, 
@@ -82,7 +64,7 @@ async def update_user_endpoint(
        
     )
 
-@router.delete("/{id}", response_model=BaseResponse[None])
+@router.delete("user/{id}", response_model=BaseResponse[None])
 async def delete_user(id: str, db: AsyncSession = Depends(get_db)):
     await delete_user_imp(db, id) 
     return BaseResponse(
@@ -92,4 +74,15 @@ async def delete_user(id: str, db: AsyncSession = Depends(get_db)):
         timestamp=datetime.now(),
         data=None,
        
+    )
+
+@router.get("/user/me", response_model=BaseResponse[UserResponse])
+async def read_me(current_user = Depends(get_current_user)):
+    return BaseResponse(
+        success=True,
+        status_code=200,
+        message="Current user retrieved successfully",
+        timestamp=datetime.now(),
+        data=UserResponse.model_validate(current_user),
+        # current_user,  
     )

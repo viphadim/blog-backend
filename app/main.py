@@ -3,25 +3,22 @@ from fastapi import FastAPI
 from app.db.session import engine, Base
 from app.db.base import Base
 import asyncio
-from app.features.users.routers import router as user_route
+from app.features.users.routers import router as user_routers
+from app.features.auth.routers import router as auth_routers
 
-app = FastAPI(title="Blogs API")
+app = FastAPI(title="Blogs ")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", reload=True)
     
+
+# Include auth routes
+app.include_router(auth_routers)
+app.include_router(user_routers)
+
 @app.get("/")
 async def root():
     return {"message": "Hello World!!"}
-
-
-@app.get("/test")
-async def testing(first_name:str,last_name:str):
-    full_name = first_name.title() + " " + last_name.title()
-    return {"full_name":full_name }
-
-# Include auth routes
-app.include_router(user_route)
 
 # Create tables on startup
 @app.on_event("startup")

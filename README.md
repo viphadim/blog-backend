@@ -25,7 +25,7 @@ app/
 │   │   ├── services.py
 │   │   └── routers.py
 │   └── ...                 # Other features
-tests/                       # Unit and integration tests
+└── tests/                    # Unit and integration tests
 requirements.txt              # Separated dependency files
 README.md                     # Project documentation
 ```
