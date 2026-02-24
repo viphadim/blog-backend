@@ -43,15 +43,13 @@ async def authenticate_user(db: AsyncSession, email: str, password: str) -> dict
     if not user or not verify_password(password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
-    # scopes = ROLE_SCOPES.get(user.role, ROLE_SCOPES["user"])
-
     access_token = create_access_token({"sub": str(user.id)})
     refresh_token = create_refresh_token({"sub": str(user.id)})  # no scopes in refresh token
 
     return {
         "access_token": access_token,
         "refresh_token": refresh_token,
-        "token_type": "bearer"
+        # "token_type": "bearer"
         
     }
 
