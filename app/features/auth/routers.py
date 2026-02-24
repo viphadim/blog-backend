@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from app.db.session import get_db
 from app.features.auth.shcemas import RegisterRequest,TokenResponse,RefreshTokenRequest
-from app.features.auth.authService import register_user, authenticate_user
+from app.features.auth.service import register_user, authenticate_user
 from app.core.dependencies import get_current_user_from_refresh_token
 from app.core.security import create_access_token,create_refresh_token
 from app.features.users.schemas import UserResponse

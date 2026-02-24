@@ -1,43 +1,34 @@
-import uuid
-from sqlalchemy import Column, String, Boolean, DateTime,ForeignKey
-from sqlalchemy.dialects.postgresql import UUID
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
-from app.db.base import Base
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, Boolean, Text
+from uuid import UUID, uuid4
+from datetime import datetime
+from app.db.session import Base
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id               = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    email            = Column(String(255), unique=True, index=True, nullable=False)
-    first_name         = Column(String(50),  index=True, nullable=False)
-    last_name         = Column(String(50), index=True, nullable=False)
-    full_name         = Column(String(50),  index=True, nullable=False)
-    # hashed_password  = Column(String, nullable=True)   # nullable for OAuth-only accounts
-    # is_admin         = Column(Boolean, default=False, nullable=False)
-    created_at       = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at       = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
-    is_approved = Column(Boolean, default=False)
-    is_active = Column(Boolean, default=False)  # Added from new code
-    is_mail_sent = Column(Boolean, default=False)
-    is_deleted= Column(Boolean, default=False)
-    password = Column(String)
-    image_url = Column(String, nullable=True)
-    position = Column(String, nullable=True)  # Added from new code
-    phone_number = Column(String, nullable=True)  # Added from new code
-    # oauth_accounts   = relationship("OAuthAccount", back_populates="user", cascade="all, delete-orphan")
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password: Mapped[str] = mapped_column(String(255), nullable=True)  # nullable for oauth users
+    first_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    last_name: Mapped[str] = mapped_column(String(100), nullable=True)
+    full_name: Mapped[str] = mapped_column(String(255), nullable=True)
+    phone_number: Mapped[str] = mapped_column(String(20), nullable=True)
+    image_url: Mapped[str] = mapped_column(String(255), nullable=True)
+    position: Mapped[str] = mapped_column(String(100), nullable=True)
+    bio: Mapped[str] = mapped_column(Text, nullable=True)
+    is_active: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_approved: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_mail_sent: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_deleted: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
+    updated_at: Mapped[datetime] = mapped_column(default=datetime.now, onupdate=datetime.now)
 
-
-class UserRole(Base):
-    __tablename__ = "user_roles"
-
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
-    # user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-    # role_id = Column(UUID(as_uuid=True), ForeignKey("roles.id"), nullable=False)
-
-    # relationships (optional but recommended)
-    # user = relationship("User", back_populates="roles")
-    # role = relationship("Role", back_populates="users")
-
-
+    # Relationships
+    roles: Mapped[list["UserRole"]] = relationship("UserRole", back_populates="user")
+    oauth_accounts: Mapped[list["OAuthAccount"]] = relationship("OAuthAccount", back_populates="user")
+    posts: Mapped[list["Post"]] = relationship("Post", back_populates="user")
+    comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user")
+    likes: Mapped[list["Like"]] = relationship("Like", back_populates="user")
+    bookmarks: Mapped[list["Bookmark"]] = relationship("Bookmark", back_populates="user")
