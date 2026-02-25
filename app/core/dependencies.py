@@ -12,7 +12,10 @@ from app.features.users.crud import get_user_by_id
 from app.features.roles.models import UserRole
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
+from typing import Optional
 
+from fastapi.security import OAuth2PasswordBearer
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/token", auto_error=False)
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/token")
 
 async def get_current_user(
@@ -90,3 +93,26 @@ async def get_current_user_from_refresh_token(
         raise credentials_exception
 
     return user
+
+
+async def get_current_user_optional(
+    token: Optional[str] = Depends(oauth2_scheme_optional),
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
+    if not token:
+        return None
+    try:
+        payload = decode_token(token)
+        if not payload or payload.get("type") != "access":
+            return None
+        user_id = payload.get("sub")
+        if not user_id:
+            return None
+        result = await db.execute(
+            select(User)
+            .where(User.id == UUID(user_id))
+            .options(joinedload(User.user_roles).joinedload(UserRole.role))
+        )
+        return result.unique().scalar_one_or_none()
+    except Exception:
+        return None

@@ -11,6 +11,8 @@ from app.features.users.routers import router as user_routers
 from app.features.auth.routers import router as auth_routers
 from app.features.roles.routers import router as role_routers
 from app.features.categories.routers import router as category_routers
+from app.features.tags.routers import router as tag_routers
+from app.features.posts.routers import router as post_routers
 
 app = FastAPI(title="Learning Process ")
 
@@ -31,7 +33,8 @@ app.include_router(auth_routers)
 app.include_router(category_routers)
 app.include_router(user_routers)
 app.include_router(role_routers)
-
+app.include_router(tag_routers)
+app.include_router(post_routers)
 
 
 @app.get("/")

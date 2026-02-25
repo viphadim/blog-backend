@@ -30,10 +30,13 @@ ROLE_PERMISSIONS = {
     ],
     "author": [
         Permission.POST_CREATE,
+        Permission.POST_EDIT_ANY,
         Permission.POST_EDIT_OWN,
         Permission.POST_DELETE_OWN,
         Permission.COMMENT_CREATE,
         Permission.COMMENT_DELETE_OWN,
+        Permission.POST_PUBLISH,
+        Permission.COMMENT_DELETE_ANY,
     ],
     "editor": [
         Permission.POST_CREATE,
