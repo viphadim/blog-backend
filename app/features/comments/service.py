@@ -11,9 +11,10 @@ from app.utilities.exceptions import NotFoundException, ForbiddenException
 async def get_post_comments(db: AsyncSession, post_id: UUID) -> list[Comment]:
     return await crud.get_post_comments(db, post_id)
 
+from app.features.notifications import service as notification_service
+from app.features.posts import crud as post_crud
 
 async def create_comment(db: AsyncSession, user: User, post_id: UUID, data: CreateCommentRequest) -> Comment:
-    # Validate parent comment exists if replying
     if data.parent_id:
         parent = await crud.get_comment_by_id(db, data.parent_id)
         if not parent:
@@ -21,14 +22,23 @@ async def create_comment(db: AsyncSession, user: User, post_id: UUID, data: Crea
         if parent.post_id != post_id:
             raise ForbiddenException("Parent comment does not belong to this post")
 
-    return await crud.create_comment(db, {
+    comment = await crud.create_comment(db, {
         "content": data.content,
         "user_id": user.id,
         "post_id": post_id,
         "parent_id": data.parent_id,
     })
 
+    # Notify post owner
+    post = await post_crud.get_post_by_id(db, post_id)
+    if post:
+        await notification_service.notify_post_commented(db, user.id, post)
 
+    # Notify parent comment owner if reply
+    if data.parent_id and parent:
+        await notification_service.notify_comment_replied(db, user.id, parent)
+
+    return comment
 async def update_comment(db: AsyncSession, user: User, comment_id: UUID, data: UpdateCommentRequest) -> Comment:
     comment = await crud.get_comment_by_id(db, comment_id)
     if not comment:
