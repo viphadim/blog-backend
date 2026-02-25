@@ -53,8 +53,8 @@ class CommentResponse(BaseModel):
 class AllCommentResponse(BaseModel):
     id: UUID
     content: str
-    user_id: UUID
-    post_id: UUID
+    # user_id: UUID
+    # post_id: UUID
     parent_id: Optional[UUID] = None
     user: Optional[UserResponse] = None
     replies: list["CommentResponse"] = []  # default empty list

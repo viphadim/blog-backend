@@ -14,6 +14,9 @@ from app.features.categories.routers import router as category_routers
 from app.features.tags.routers import router as tag_routers
 from app.features.posts.routers import router as post_routers
 from app.features.comments.routers import router as comment_routers
+from app.features.likes.routers import router as like_router
+from app.features.bookmarks.routers import router as bookmark_router
+
 
 app = FastAPI(title="Learning Process ")
 
@@ -37,6 +40,8 @@ app.include_router(role_routers)
 app.include_router(tag_routers)
 app.include_router(post_routers)
 app.include_router(comment_routers,prefix="/posts")
+app.include_router(like_router, prefix="", tags=["Likes"])
+app.include_router(bookmark_router, prefix="/bookmarks", tags=["Bookmarks"])
 
 
 @app.get("/")
