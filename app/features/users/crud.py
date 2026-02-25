@@ -1,81 +1,67 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from app.features.users.models import User
-from app.core.security import hash_password, verify_password
-from typing import List
-from typing import Optional
+from sqlalchemy.orm import joinedload
 from uuid import UUID
 
-from sqlalchemy import select
-from fastapi import HTTPException, status
+from app.features.users.models import User
+from app.features.roles.models import UserRole
 
-async def create_user(
-    db: AsyncSession,
-    first_name: str,
-    last_name: str,
-    email: str,
-    phone_number: Optional[str] = None
-):
-    #  check if email already exists
-    result = await db.execute(select(User).where(User.email == email))
-    existing_user = result.scalar_one_or_none()
 
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-
-    # create new user
-    new_user = User(
-        email=email,
-        first_name=first_name,
-        last_name=last_name,
-        full_name=f"{first_name} {last_name}",
-        phone_number=phone_number,
-        is_active=False,
-        is_approved=False,
-        is_mail_sent=False,
-        is_deleted=False,
+async def get_all_users(db: AsyncSession) -> list[User]:
+    result = await db.execute(
+        select(User)
+        .options(joinedload(User.user_roles).joinedload(UserRole.role))
     )
+    return result.unique().scalars().all()
 
-    db.add(new_user)
+
+async def get_user_by_id(db: AsyncSession, user_id: UUID) -> User | None:
+    result = await db.execute(
+        select(User)
+        .where(User.id == user_id)
+        .options(
+            joinedload(User.user_roles).joinedload(UserRole.role) 
+        )
+    )
+    return result.unique().scalar_one_or_none()
+
+async def get_user_by_email(db: AsyncSession, email: str) -> User | None:
+    result = await db.execute(
+        select(User)
+        .where(User.email == email)
+        .options(joinedload(User.user_roles).joinedload(UserRole.role))
+    )
+    return result.unique().scalar_one_or_none()
+
+
+async def create_user(db: AsyncSession, data: dict) -> User:
+    user = User(**data)
+    db.add(user)
     await db.commit()
-    await db.refresh(new_user)
-    return new_user
+
+    # Reload with roles after commit
+    result = await db.execute(
+        select(User)
+        .where(User.id == user.id)
+        .options(joinedload(User.user_roles).joinedload(UserRole.role))
+    )
+    return result.unique().scalar_one()
 
 
-async def update_user(
-    db: AsyncSession,
-    id: str,
-    first_name: str,
-    last_name: str,
-):
-    result = await db.execute(select(User).where(User.id == id))
-    existing_user = result.scalar_one_or_none()
-    existing_user.first_name = first_name
-    existing_user.last_name = last_name
-    existing_user.full_name = f"{first_name} {last_name}"
-
+async def update_user(db: AsyncSession, user: User, data: dict) -> User:
+    for key, value in data.items():
+        setattr(user, key, value)
     await db.commit()
-    await db.refresh(existing_user)
 
-    return existing_user
+    # Reload with roles after commit
+    result = await db.execute(
+        select(User)
+        .where(User.id == user.id)
+        .options(joinedload(User.user_roles).joinedload(UserRole.role))
+    )
+    return result.unique().scalar_one()
 
-async def delete_user(db: AsyncSession, id: str):
-    qurrey=await db.execute(select(User).where(User.id == id,User.is_deleted == False))
-    user = qurrey.scalar_one_or_none()
+
+async def delete_user(db: AsyncSession, user: User) -> None:
+    await db.delete(user)
     await db.commit()
-    await db.refresh(user)
-    return user
-
-async def get_user_by_id(db: AsyncSession, id: UUID):
-    result = await db.execute(select(User).where(User.id == id, User.is_deleted == False))
-    user = result.scalar_one_or_none()
-    return user
-
-
-
-async def get_all_users(db:AsyncSession)->List[User]:
-    qurrey=await db.execute(select(User).where(User.is_deleted == False))
-    return qurrey.scalars().all()

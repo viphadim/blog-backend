@@ -3,6 +3,7 @@ from sqlalchemy import String, Boolean, Text
 from uuid import UUID, uuid4
 from datetime import datetime
 from app.db.session import Base
+from app.features.roles.models import UserRole, Role
 
 
 class User(Base):
@@ -26,9 +27,19 @@ class User(Base):
     updated_at: Mapped[datetime] = mapped_column(default=datetime.now, onupdate=datetime.now)
 
     # Relationships
-    roles: Mapped[list["UserRole"]] = relationship("UserRole", back_populates="user")
+    # roles: Mapped[list["UserRole"]] = relationship("UserRole", back_populates="user")
     oauth_accounts: Mapped[list["OAuthAccount"]] = relationship("OAuthAccount", back_populates="user")
     posts: Mapped[list["Post"]] = relationship("Post", back_populates="user")
     comments: Mapped[list["Comment"]] = relationship("Comment", back_populates="user")
     likes: Mapped[list["Like"]] = relationship("Like", back_populates="user")
     bookmarks: Mapped[list["Bookmark"]] = relationship("Bookmark", back_populates="user")
+    user_roles: Mapped[list["UserRole"]] = relationship(
+        "UserRole",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin"
+    )
+
+    @property
+    def roles(self) -> list["Role"]:
+        return [ur.role for ur in self.user_roles if ur.role]

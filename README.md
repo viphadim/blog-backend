@@ -5,14 +5,13 @@ app/
 ├── core/
 │   ├── config.py           # Environment variables and settings (Pydantic)
 │   ├── security.py         # JWT creation, password hashing, OAuth flows
-│   └── dependencies.py     # Reusable dependencies (e.g., get_db_session)
-│   ├── scopes.py           # JWT creation, password hashing, OAuth flows
-│   └── permissions.py     # has_permission, require_permission
+│   ├── dependencies.py     # Reusable dependencies (e.g., get_db_session)
+│   ├── scopes.py          # oauth2 scopes
+│   ├── seed.py             # seed roles + permissions on startup
+│   └── permissions.py     # has_permission, require_permission, dynamic permission checker
 ├── db/
 │   ├── session.py          # SQLAlchemy engine and sessionmaker setup
 │   └── base.py             # Declarative base for models
-├── services/
-│   └── utils.py            # Common utility functions
 ├── features/
 │   ├── users/              # User management feature
 │   │   ├── models.py       # SQLAlchemy models
@@ -26,6 +25,10 @@ app/
 │   │   ├── crud.py
 │   │   ├── services.py
 │   │   └── routers.py
+├── utilities/
+│   ├── baseResponse.py    # BaseResponse[T]
+│   ├── pagination.py      # PageResponse[T]
+│   ├── exceptions.py      # custom exceptions
 │   └── ...                 # Other features
 └── tests/                    # Unit and integration tests
 requirements.txt              # Separated dependency files
