@@ -7,6 +7,28 @@ from sqlalchemy.orm import selectinload
 from app.features.roles.models import Role, Permission, RolePermission, UserRole
 from app.features.users.models import User
 
+
+
+async def get_all_roles(db: AsyncSession) -> list[Role]:
+    result = await db.execute(
+        select(Role)
+        .options(
+            joinedload(Role.role_permissions).joinedload(RolePermission.permission)  # 
+        )
+    )
+    return result.unique().scalars().all()
+
+
+async def get_role_by_id(db: AsyncSession, role_id: UUID) -> Role | None:
+    result = await db.execute(
+        select(Role)
+        .where(Role.id == role_id)
+        .options(
+            joinedload(Role.role_permissions).joinedload(RolePermission.permission)  # 
+        )
+    )
+    return result.unique().scalar_one_or_none()
+
 async def get_user_with_roles(db: AsyncSession, user_id: UUID):
     result = await db.execute(
         select(User)
@@ -17,15 +39,12 @@ async def get_user_with_roles(db: AsyncSession, user_id: UUID):
     )
     user = result.scalar_one()
     return user
+
+
 # ─── Role ────────────────────────────────────────────────
 async def get_role_by_name(db: AsyncSession, name: str) -> Role | None:
     result = await db.execute(select(Role).where(Role.name == name))
     return result.scalar_one_or_none()
-
-
-async def get_all_roles(db: AsyncSession) -> list[Role]:
-    result = await db.execute(select(Role))
-    return result.scalars().all()
 
 
 # ─── Permission ───────────────────────────────────────────
@@ -49,12 +68,6 @@ async def get_user_roles(db: AsyncSession, user_id: UUID) -> list[UserRole]:
     return result.scalars().all()
 
 
-# async def assign_role_to_user(db: AsyncSession, user_id: UUID, role_id: UUID) -> UserRole:
-#     user_role = UserRole(user_id=user_id, role_id=role_id)
-#     db.add(user_role)
-#     await db.commit()
-#     await db.refresh(user_role)
-#     return user_role
 
 async def assign_role_to_user(db: AsyncSession, user_id: UUID, role_id: UUID) -> UserRole:
     user_role = UserRole(user_id=user_id, role_id=role_id)

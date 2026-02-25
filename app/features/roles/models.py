@@ -17,12 +17,16 @@ class Role(Base):
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
 
     # Relationships
-    permissions: Mapped[list["RolePermission"]] = relationship("RolePermission", back_populates="role")
+    # Relationships
+    role_permissions: Mapped[list["RolePermission"]] = relationship(
+        "RolePermission", back_populates="role"
+    )
     user_roles: Mapped[list["UserRole"]] = relationship(
-    "UserRole",
-    back_populates="role",
-    lazy="selectin"
-)
+        "UserRole", back_populates="role", lazy="selectin"
+    )
+    # @property
+    # def permissions(self):
+    #     return [rp.permission for rp in self.role_permissions if rp.permission]
 
 class Permission(Base):
     __tablename__ = "permissions"
@@ -31,9 +35,11 @@ class Permission(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)  # post:create, post:publish
     description: Mapped[str] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-
+    
     # Relationships
-    roles: Mapped[list["RolePermission"]] = relationship("RolePermission", back_populates="permission")
+    role_permissions: Mapped[list["RolePermission"]] = relationship(
+        "RolePermission", back_populates="permission"  #  renamed
+    )
 
 
 class RolePermission(Base):
@@ -46,9 +52,10 @@ class RolePermission(Base):
 
     __table_args__ = (UniqueConstraint("role_id", "permission_id", name="uq_role_permission"),)
 
+
     # Relationships
-    role: Mapped["Role"] = relationship("Role", back_populates="permissions")
-    permission: Mapped["Permission"] = relationship("Permission", back_populates="roles")
+    role: Mapped["Role"] = relationship("Role", back_populates="role_permissions")        #  fixed
+    permission: Mapped["Permission"] = relationship("Permission", back_populates="role_permissions")  #  fixed
 
 
 class UserRole(Base):

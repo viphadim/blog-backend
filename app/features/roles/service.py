@@ -4,11 +4,18 @@ from uuid import UUID
 from app.features.roles import crud
 from app.features.users import crud as user_crud
 from app.utilities.exceptions import NotFoundException, ConflictException
+from app.features.roles.models import Role
 
 
-async def get_all_roles(db: AsyncSession):
+async def get_all_roles(db: AsyncSession) -> list[Role]:
     return await crud.get_all_roles(db)
 
+
+async def get_role_by_id(db: AsyncSession, role_id: UUID) -> Role:
+    role = await crud.get_role_by_id(db, role_id)
+    if not role:
+        raise NotFoundException("Role not found")
+    return role
 
 async def assign_role(db: AsyncSession, user_id: UUID, role_name: str):
     user = await user_crud.get_user_by_id(db, user_id)
