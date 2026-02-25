@@ -3,12 +3,14 @@ from fastapi import FastAPI
 from app.db.session import AsyncSessionLocal, engine
 from app.db.base import Base
 import asyncio
-from app.features.users.routers import router as user_routers
-from app.features.auth.routers import router as auth_routers
-from app.features.roles.routers import router as role_routers
 from app.utilities.exceptions import AppException, app_exception_handler, unhandled_exception_handler
 from app.core.seed import seed_roles_and_permissions, seed_admin_user
 from fastapi.middleware.cors import CORSMiddleware
+
+from app.features.users.routers import router as user_routers
+from app.features.auth.routers import router as auth_routers
+from app.features.roles.routers import router as role_routers
+from app.features.categories.routers import router as category_routers
 
 app = FastAPI(title="Learning Process ")
 
@@ -26,8 +28,10 @@ app.add_middleware(
 )
 # Include auth routes
 app.include_router(auth_routers)
+app.include_router(category_routers)
 app.include_router(user_routers)
 app.include_router(role_routers)
+
 
 
 @app.get("/")
