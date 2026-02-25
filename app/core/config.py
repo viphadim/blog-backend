@@ -10,9 +10,24 @@ class Settings(BaseSettings):
     DATABASE_NAME: str | None = None
     DATABASE_PORT: str = "5433"
 
+    # JWT
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+
+    # Email
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_PORT: int = 587
+    MAIL_SERVER: str = "smtp.gmail.com"
+    MAIL_FROM_NAME: str = "Blogs API"
+    FRONTEND_URL: str = "http://localhost:3000"
+
+    # Google OAuth
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str = "http://localhost:8000/auth/google/callback"
 
     @property
     def DATABASE_URL(self) -> str:

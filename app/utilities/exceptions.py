@@ -52,8 +52,10 @@ async def app_exception_handler(request: Request, exc: AppException):
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception):
+    import traceback
+    traceback.print_exc() 
     return JSONResponse(
-        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        status_code=500,
         content={
             "success": False,
             "status_code": 500,

@@ -69,3 +69,26 @@ class TokenResponse(BaseModel):
 
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: EmailStr
+
+
+class ResetPasswordRequest(BaseModel):
+    token: str
+    new_password: str
+
+    @field_validator("new_password")
+    def password_length(cls, v):
+        if len(v.encode("utf-8")) > 72:
+            raise ValueError("Password must be at most 72 characters")
+        return v
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
+class MessageResponse(BaseModel):
+    message: str

@@ -7,15 +7,22 @@ from app.features.users.routers import router as user_routers
 from app.features.auth.routers import router as auth_routers
 from app.utilities.exceptions import AppException, app_exception_handler, unhandled_exception_handler
 from app.core.seed import seed_roles_and_permissions, seed_admin_user
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(title="Learning Process ")
-
-
 
 #  Exception handlers 
 app.add_exception_handler(AppException, app_exception_handler)
 app.add_exception_handler(Exception, unhandled_exception_handler)
 
-
+# Add CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  #  frontend URL in production
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Include auth routes
 app.include_router(auth_routers)
 app.include_router(user_routers)
