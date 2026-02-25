@@ -38,7 +38,7 @@ class TagResponse(BaseModel):
 
 
 class PostResponse(BaseModel):
-    # id: UUID
+    id: UUID
     title: str
     slug: str
     content: str
