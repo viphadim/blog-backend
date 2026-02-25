@@ -18,10 +18,8 @@ def generate_slug(title: str) -> str:
     return slug
 
 
-async def get_all_posts1(db: AsyncSession) -> list[Post]:
-    return await crud.get_all_posts(db, published_only=True)
 
-    
+
 async def get_all_posts(db: AsyncSession, current_user=None) -> list[Post]:
     user_role_names = []
     if current_user:
@@ -33,6 +31,34 @@ async def get_all_posts(db: AsyncSession, current_user=None) -> list[Post]:
 
     #  Everyone else sees published only
     return await crud.get_all_posts(db, published_only=True)
+
+async def get_all_posts_service(
+    db: AsyncSession,
+    current_user=None,
+    category_id: UUID | None = None,
+    tag_id: UUID | None = None,
+):
+    user_role_names = []
+
+    if current_user:
+        user_role_names = [ur.role.name for ur in current_user.user_roles]
+
+    # Admin can see all posts
+    published_only = not any(r in user_role_names for r in ["admin", "editor"])
+
+    return await crud.get_posts_filtered(
+        db=db,
+        published_only=published_only,
+        category_id=category_id,
+        tag_id=tag_id,
+    )
+
+
+async def get_my_posts_service(
+    db: AsyncSession,
+    user_id: UUID,
+):
+    return await crud.get_user_posts(db, user_id)
 
 async def get_my_posts(db: AsyncSession, user_id: UUID) -> list[Post]:
     return await crud.get_user_posts(db, user_id)

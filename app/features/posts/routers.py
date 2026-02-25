@@ -16,23 +16,32 @@ router = APIRouter(prefix="" , tags=['Post'])
 
 
 
-#  Public — but admin/editor sees all
 @router.get("/posts", response_model=BaseResponse[list[PostResponse]])
-async def get_all_posts(
+async def get_posts(
+    category_id: UUID | None = None,
+    tag_id: UUID | None = None,
+    current_user=Depends(get_current_user_optional),
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(get_current_user_optional),  #  optional — no 401 for guests
 ):
-    posts = await service.get_all_posts(db, current_user)
+    posts= await service.get_all_posts_service(
+        db=db,
+        current_user=current_user,
+        category_id=category_id,
+        tag_id=tag_id,
+    )
     return BaseResponse(
         success=True, status_code=200, message="Posts retrieved successfully",
         timestamp=datetime.now(),
         data=[PostResponse.from_post(p) for p in posts],
     )
 
-# #  Public
-# @router.get("/posts", response_model=BaseResponse[list[PostResponse]])
-# async def get_all_posts(db: AsyncSession = Depends(get_db)):
-#     posts = await service.get_all_posts(db)
+#  Public — but admin/editor sees all
+# @router.get("/postss", response_model=BaseResponse[list[PostResponse]])
+# async def get_all_posts(
+#     db: AsyncSession = Depends(get_db),
+#     current_user=Depends(get_current_user_optional),  #  optional — no 401 for guests
+# ):
+#     posts = await service.get_all_posts(db, current_user)
 #     return BaseResponse(
 #         success=True, status_code=200, message="Posts retrieved successfully",
 #         timestamp=datetime.now(),

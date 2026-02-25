@@ -23,6 +23,61 @@ async def get_all_posts(db: AsyncSession, published_only: bool = True) -> list[P
     result = await db.execute(query)
     return result.unique().scalars().all()
 
+async def get_posts_by_tag(db: AsyncSession, tag_id: UUID) -> list[Post]:
+    result = await db.execute(
+        select(Post)
+        .join(PostTag)
+        .where(PostTag.tag_id == tag_id)
+        .options(
+            joinedload(Post.user),
+            joinedload(Post.category),
+            joinedload(Post.tags).joinedload(PostTag.tag),
+        )
+    )
+    return result.unique().scalars().all()
+
+async def get_posts_filtered(
+    db: AsyncSession,
+    published_only: bool = True,
+    category_id: UUID | None = None,
+    tag_id: UUID | None = None,
+):
+    query = select(Post)
+
+    if tag_id:
+        query = query.join(PostTag)
+
+    if published_only:
+        query = query.where(Post.is_published == True)
+
+    if category_id:
+        query = query.where(Post.category_id == category_id)
+
+    if tag_id:
+        query = query.where(PostTag.tag_id == tag_id)
+
+    query = query.options(
+        joinedload(Post.user),
+        joinedload(Post.category),
+        joinedload(Post.tags).joinedload(PostTag.tag),
+    )
+
+    result = await db.execute(query)
+    return result.unique().scalars().all()
+
+
+async def get_posts_by_category(db: AsyncSession, category_id: UUID) -> list[Post]:
+    result = await db.execute(
+        select(Post)
+        .where(Post.category_id == category_id)
+        .options(
+            joinedload(Post.user),
+            joinedload(Post.category),
+            joinedload(Post.tags).joinedload(PostTag.tag),
+        )
+    )
+    return result.unique().scalars().all()
+
 async def get_post_by_id(db: AsyncSession, post_id: UUID) -> Post | None:
     result = await db.execute(
         select(Post)

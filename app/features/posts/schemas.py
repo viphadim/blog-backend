@@ -3,8 +3,8 @@ from uuid import UUID
 from datetime import datetime
 from typing import Optional
 from app.features.users.schemas import UserResponse
-from app.features.categories.schemas import CategoryResponse
-from app.features.tags.schemas import TagResponse
+# from app.features.categories.schemas import CategoryResponse
+# from app.features.tags.schemas import TagResponse
 
 
 class CreatePostRequest(BaseModel):
@@ -21,17 +21,31 @@ class UpdatePostRequest(BaseModel):
     thumbnail: Optional[str] = None
     category_id: Optional[UUID] = None
     tags: Optional[list[str]] = None
+class CategoryResponse(BaseModel):
+    # id:UUID
+    name:str 
+    slug:str
+    description:Optional[str]=None
+    # created_at: datetime
+
+    model_config = {"from_attributes": True}
+class TagResponse(BaseModel):
+    name: str
+    slug: str
+    # created_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
 
 
 class PostResponse(BaseModel):
-    id: UUID
+    # id: UUID
     title: str
     slug: str
     content: str
     thumbnail: Optional[str] = None
     is_published: bool
-    user_id: UUID
-    category_id: Optional[UUID] = None
+    # user_id: UUID
+    # category_id: Optional[UUID] = None
     category: Optional[CategoryResponse] = None
     user: Optional[UserResponse] = None
     tags: list[TagResponse] = []
@@ -48,7 +62,7 @@ class PostResponse(BaseModel):
             content=post.content,
             thumbnail=post.thumbnail,
             is_published=post.is_published,
-            user_id=post.user_id,
+            # user_id=post.user_id,
             category_id=post.category_id,
             category=CategoryResponse.model_validate(post.category) if post.category else None,
             # user=UserResponse.model_validate(post.user) if post.user else None,
