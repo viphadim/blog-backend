@@ -5,13 +5,20 @@ from typing import Optional
 
 
 class RoleResponse(BaseModel):
+    # id: UUID
+    name: str
+    description: Optional[str] = None
+    # created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+class AllRoleResponse(BaseModel):
     id: UUID
     name: str
     description: Optional[str] = None
     created_at: datetime
 
     model_config = {"from_attributes": True}
-
 
 class PermissionResponse(BaseModel):
     id: UUID
@@ -22,10 +29,10 @@ class PermissionResponse(BaseModel):
 
 
 class RoleWithPermissionsResponse(BaseModel):
-    id: UUID
+    # id: UUID
     name: str
     description: Optional[str] = None
-    created_at: datetime
+    # created_at: datetime
     permissions: list[PermissionResponse] = []
 
     model_config = {"from_attributes": True}

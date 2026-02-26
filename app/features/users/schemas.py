@@ -3,7 +3,8 @@ from pydantic import BaseModel, EmailStr
 from typing import Optional
 from uuid import UUID, uuid4
 from datetime import datetime
-from pydantic import Field
+from pydantic import Field,field_validator
+
 class UserCreate(BaseModel):
     first_name: str
     last_name: str
@@ -28,13 +29,13 @@ class updateUserRequest(BaseModel):
     last_name: str
 
 class RoleResponse(BaseModel):
-    id: UUID
+    # id: UUID
     name: str
     description: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
-class UserResponse(BaseModel):
+class AllUserResponse(BaseModel):
     id: Optional[UUID] = None 
     email: EmailStr
     first_name: Optional[str] = None
@@ -55,6 +56,40 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True} 
 
+class UserResponse(BaseModel):
+    # id: Optional[UUID] = None 
+    email: EmailStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    full_name: Optional[str] = None
+    position: Optional[str] = None
+    bio: Optional[str] = None
+    # is_approved: Optional[bool] = None
+    # is_active: Optional[bool] = None
+    # is_mail_sent: Optional[bool] = None
+    # is_deleted: Optional[bool] = None
+    image_url: Optional[str] = None
+    phone_number: Optional[str] = None
+    # created_at: Optional[datetime] = None
+    # updated_at: Optional[datetime] = None
+
+    # roles: list[RoleResponse] = Field(default_factory=list)
+
+    model_config = {"from_attributes": True} 
+
 class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
+
+class UpdateProfileRequest(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    phone_number: Optional[str] = None
+    position: Optional[str] = None
+    bio: Optional[str] = None
+
+    @field_validator("first_name", "last_name")
+    def not_empty(cls, v):
+        if v is not None and len(v.strip()) == 0:
+            raise ValueError("Field cannot be empty")
+        return v

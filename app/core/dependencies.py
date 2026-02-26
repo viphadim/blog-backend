@@ -37,9 +37,9 @@ oauth2_scheme = OAuth2PasswordBearer(
 oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl="/auth/token", auto_error=False)
 
 
-# ✅ Main dependency — follows FastAPI docs exactly
+#  Main dependency — follows FastAPI docs exactly
 async def get_current_user(
-    security_scopes: SecurityScopes,  # ✅ FastAPI auto injects required scopes
+    security_scopes: SecurityScopes,  #  FastAPI auto injects required scopes
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),
 ) -> User:
@@ -67,13 +67,13 @@ async def get_current_user(
         if user_id is None:
             raise credentials_exception
 
-        # ✅ Extract scopes from token
+        #  Extract scopes from token
         token_scopes: list[str] = payload.get("scopes", [])
 
     except (JWTError, ValidationError):
         raise credentials_exception
 
-    # ✅ Check every required scope exists in token
+    #  Check every required scope exists in token
     for scope in security_scopes.scopes:
         if scope not in token_scopes:
             raise HTTPException(
@@ -94,7 +94,7 @@ async def get_current_user(
     return user
 
 
-# ✅ Optional — for public endpoints that behave differently when logged in
+#  Optional — for public endpoints that behave differently when logged in
 async def get_current_user_optional(
     token: Optional[str] = Depends(oauth2_scheme_optional),
     db: AsyncSession = Depends(get_db),
@@ -118,7 +118,7 @@ async def get_current_user_optional(
         return None
 
 
-# ✅ For refresh token endpoint
+#  For refresh token endpoint
 async def get_current_user_from_refresh_token(token: str, db: AsyncSession) -> User:
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

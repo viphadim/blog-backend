@@ -5,7 +5,7 @@ from uuid import UUID
 
 from app.db.session import get_db
 from app.features.posts import service
-from app.features.posts.schemas import CreatePostRequest, UpdatePostRequest, PostResponse
+from app.features.posts.schemas import CreatePostRequest, UpdatePostRequest, PostResponse,AllPostResponse
 from app.utilities.baseResponse import BaseResponse
 from app.core.dependencies import get_current_user,get_current_user_optional
 # from app.core.permissions import can_publish_post
@@ -55,7 +55,7 @@ async def get_posts(
 #     db: AsyncSession = Depends(get_db),
 #     current_user: User = Depends(get_current_user),
 # ):
-@router.get("/post/me", response_model=BaseResponse[list[PostResponse]])
+@router.get("/post/me", response_model=BaseResponse[list[AllPostResponse]])
 async def get_my_posts(
     db: AsyncSession = Depends(get_db),
     current_user: User = Security(get_current_user, scopes=[Scope.ME_READ]),
@@ -64,7 +64,7 @@ async def get_my_posts(
     return BaseResponse(
         success=True, status_code=200, message="Your posts retrieved successfully",
         timestamp=datetime.now(),
-        data=[PostResponse.from_post(p) for p in posts],
+        data=[AllPostResponse.from_post(p) for p in posts],
     )
 
 
