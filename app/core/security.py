@@ -55,8 +55,23 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
-
 def create_access_token(
+    data: dict,
+    roles: list[str] = [],
+    scopes: list[str] = [],
+    expires_delta: Optional[timedelta] = None
+) -> str:
+    to_encode = data.copy()
+    expire = datetime.utcnow() + (expires_delta or timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+    to_encode.update({
+        "exp": expire,
+        "type": "access",
+        "roles": roles,
+        "scopes": scopes,  #  embed scopes
+    })
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+def create_access_token1(
     data: dict,
     roles: list[str] = [],
     permissions: list[str] = [],
@@ -67,8 +82,8 @@ def create_access_token(
     to_encode.update({
         "exp": expire,
         "type": "access",
-        "roles": roles,            # ✅ embed roles
-        "permissions": permissions # ✅ embed permissions
+        "roles": roles,            #  embed roles
+        "permissions": permissions #  embed permissions
     })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -81,7 +96,7 @@ def create_refresh_token(
     expire = datetime.utcnow() + (expires_delta or timedelta(days=7))
     to_encode.update({
         "exp": expire,
-        "type": "refresh"  # ✅ mark as refresh token
+        "type": "refresh"  #  mark as refresh token
     })
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 

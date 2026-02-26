@@ -5,7 +5,6 @@ app/
 ├── core/
 │   ├── config.py           # Environment variables and settings (Pydantic)
 │   ├── security.py         # JWT creation, password hashing, OAuth flows
-│   ├── dependencies.py     # Reusable dependencies (e.g., get_db_session)
 │   ├── scopes.py          # oauth2 scopes
 │   ├── seed.py             # seed roles + permissions on startup
 │   └── permissions.py     # has_permission, require_permission, dynamic permission checker

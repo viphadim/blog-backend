@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from uuid import UUID
@@ -9,16 +9,23 @@ from app.features.likes.schemas import LikeStatusResponse
 from app.utilities.baseResponse import BaseResponse
 from app.core.dependencies import get_current_user
 from app.features.users.models import User
+from app.core.scopes import Scope
 
 router = APIRouter()
 
 
-# Toggle like/unlike post
+# # Toggle like/unlike post
+# @router.post("/posts/{post_id}/like", response_model=BaseResponse[LikeStatusResponse])
+# async def toggle_post_like(
+#     post_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.post("/posts/{post_id}/like", response_model=BaseResponse[LikeStatusResponse])
 async def toggle_post_like(
     post_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.ME_READ]),  #   any logged in user
 ):
     result = await service.toggle_post_like(db, current_user, post_id)
     message = "Post liked successfully" if result.liked else "Post unliked successfully"
@@ -38,12 +45,18 @@ async def get_post_likes(post_id: UUID, db: AsyncSession = Depends(get_db)):
     )
 
 
-# Toggle like/unlike comment
+# # Toggle like/unlike comment
+# @router.post("/comments/{comment_id}/like", response_model=BaseResponse[LikeStatusResponse])
+# async def toggle_comment_like(
+#     comment_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.post("/comments/{comment_id}/like", response_model=BaseResponse[LikeStatusResponse])
 async def toggle_comment_like(
     comment_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.ME_READ]),  #  
 ):
     result = await service.toggle_comment_like(db, current_user, comment_id)
     message = "Comment liked successfully" if result.liked else "Comment unliked successfully"

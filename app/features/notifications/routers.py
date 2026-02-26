@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from uuid import UUID
@@ -9,14 +9,20 @@ from app.features.notifications.schemas import NotificationResponse, UnreadCount
 from app.utilities.baseResponse import BaseResponse
 from app.core.dependencies import get_current_user
 from app.features.users.models import User
+from app.core.scopes import Scope
 
 router = APIRouter()
 
 
+# @router.get("/", response_model=BaseResponse[list[NotificationResponse]])
+# async def get_my_notifications(
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.get("/", response_model=BaseResponse[list[NotificationResponse]])
 async def get_my_notifications(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.ME_READ]),  #  
 ):
     notifications = await service.get_my_notifications(db, current_user)
     return BaseResponse(

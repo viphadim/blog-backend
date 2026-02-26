@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from uuid import UUID
@@ -9,16 +9,23 @@ from app.features.admin.schemas import DashboardStatsResponse, AssignRoleRequest
 from app.features.users.schemas import UserResponse
 from app.features.users import crud as user_crud
 from app.utilities.baseResponse import BaseResponse
-from app.core.permissions import can_access_dashboard, can_ban_user
+# from app.core.permissions import can_access_dashboard, can_ban_user
+from app.core.dependencies import get_current_user
+from app.core.scopes import Scope
 
 router = APIRouter()
 
 
 # Admin dashboard stats
+# @router.get("/dashboard", response_model=BaseResponse[DashboardStatsResponse])
+# async def get_dashboard(
+#     db: AsyncSession = Depends(get_db),
+#     current_user=Depends(can_access_dashboard),
+# ):
 @router.get("/dashboard", response_model=BaseResponse[DashboardStatsResponse])
 async def get_dashboard(
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_access_dashboard),
+    current_user=Security(get_current_user, scopes=[Scope.ADMIN_DASHBOARD]),  #  
 ):
     stats = await service.get_dashboard_stats(db)
     return BaseResponse(
@@ -31,7 +38,8 @@ async def get_dashboard(
 @router.get("/users", response_model=BaseResponse[list[UserResponse]])
 async def get_all_users(
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_access_dashboard),
+    # current_user=Depends(can_access_dashboard),
+    current_user=Security(get_current_user, scopes=[Scope.ADMIN_DASHBOARD])
 ):
     users = await user_crud.get_all_users(db)
     return BaseResponse(
@@ -41,12 +49,19 @@ async def get_all_users(
     )
 
 
-# Ban user
-@router.patch("/users/{user_id}/ban", response_model=BaseResponse[MessageResponse])
+# # Ban user
+# @router.patch("/users/{user_id}/ban", response_model=BaseResponse[MessageResponse])
+# async def ban_user(
+#     user_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user=Depends(can_ban_user),
+# ):
+
+@router.patch("/users/{user_id}/ban")
 async def ban_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_ban_user),
+    current_user=Security(get_current_user, scopes=[Scope.USER_BAN]),  #  
 ):
     await service.ban_user(db, user_id)
     return BaseResponse(
@@ -58,10 +73,15 @@ async def ban_user(
 
 # Unban user
 @router.patch("/users/{user_id}/unban", response_model=BaseResponse[MessageResponse])
-async def unban_user(
+# async def unban_user(
+#     user_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user=Depends(can_ban_user),
+# ):
+async def ban_user(
     user_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_ban_user),
+    current_user=Security(get_current_user, scopes=[Scope.USER_BAN]),  #  
 ):
     await service.unban_user(db, user_id)
     return BaseResponse(
@@ -71,13 +91,20 @@ async def unban_user(
     )
 
 
-# Assign role
-@router.patch("/users/{user_id}/assign-role", response_model=BaseResponse[MessageResponse])
+# # Assign role
+# @router.patch("/users/{user_id}/assign-role", response_model=BaseResponse[MessageResponse])
+# async def assign_role(
+#     user_id: UUID,
+#     body: AssignRoleRequest,
+#     db: AsyncSession = Depends(get_db),
+#     current_user=Depends(can_access_dashboard),
+# ):
+@router.patch("/users/{user_id}/assign-role")
 async def assign_role(
     user_id: UUID,
     body: AssignRoleRequest,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_access_dashboard),
+    current_user=Security(get_current_user, scopes=[Scope.ADMIN_DASHBOARD]),  #  
 ):
     await service.assign_role(db, user_id, body.role_name)
     return BaseResponse(
@@ -87,14 +114,19 @@ async def assign_role(
         data=MessageResponse(message=f"User is now a {body.role_name}"),
     )
 
-
 # Revoke role
 @router.patch("/users/{user_id}/revoke-role", response_model=BaseResponse[MessageResponse])
-async def revoke_role(
+# async def revoke_role(
+#     user_id: UUID,
+#     body: AssignRoleRequest,
+#     db: AsyncSession = Depends(get_db),
+#     current_user=Depends(can_access_dashboard),
+# ):
+async def assign_role(
     user_id: UUID,
     body: AssignRoleRequest,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_access_dashboard),
+    current_user=Security(get_current_user, scopes=[Scope.ADMIN_DASHBOARD]),  #  
 ):
     await service.revoke_role(db, user_id, body.role_name)
     return BaseResponse(

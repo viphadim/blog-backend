@@ -13,6 +13,7 @@ from app.features.roles.crud import get_user_permissions,get_role_by_name,assign
 from app.core.email import send_verification_email, send_password_reset_email
 from app.features.oauth.models import OAuthAccount
 from app.core.config import settings
+from app.core.scopes import ROLE_SCOPES
 
 async def register_user1(db: AsyncSession, first_name: str, last_name: str, email: str, password: str) -> User:
     existing = await get_user_by_email(db, email)
@@ -102,8 +103,42 @@ async def resend_verification_email(db: AsyncSession, email: str) -> None:
     await send_verification_email(email, token)
     await user_crud.update_user(db, user, {"is_mail_sent": True})
 
-# ─── Login ───────────────────────────────────────────────────────────────
+
 async def authenticate_user(db: AsyncSession, email: str, password: str) -> dict:
+    user = await user_crud.get_user_by_email(db, email)
+    if not user or not verify_password(password, user.password):
+        raise UnauthorizedException("Invalid credentials")
+
+    if not user.is_active:
+        raise UnauthorizedException("Please verify your email before logging in")
+
+    role_names = [ur.role.name for ur in user.user_roles]
+
+    #  Collect all scopes from all roles
+    all_scopes = set()
+    for role_name in role_names:
+        role_scopes = ROLE_SCOPES.get(role_name, [])
+        all_scopes.update(role_scopes)
+
+    print("ROLES:", role_names)          #  debug
+    print("SCOPES:", list(all_scopes))   #  debug
+
+    access_token = create_access_token(
+        data={"sub": str(user.id)},
+        roles=role_names,
+        scopes=[s.value for s in all_scopes],  #  convert Enum to string
+    )
+    refresh_token = create_refresh_token({"sub": str(user.id)})
+
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "user": UserResponse.model_validate(user),
+    }
+
+# ─── Login ───────────────────────────────────────────────────────────────
+async def authenticate_user1(db: AsyncSession, email: str, password: str) -> dict:
     user = await user_crud.get_user_by_email(db, email)
     if not user or not verify_password(password, user.password):
         raise UnauthorizedException("Invalid credentials")

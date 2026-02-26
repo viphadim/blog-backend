@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends,Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from uuid import UUID
@@ -7,7 +7,9 @@ from app.db.session import get_db
 from app.features.tags import service
 from app.features.tags.schemas import CreateTagRequest, UpdateTagRequest, TagResponse
 from app.utilities.baseResponse import BaseResponse
-from app.core.permissions import can_access_dashboard
+# from app.core.permissions import can_access_dashboard
+from app.core.dependencies import get_current_user
+from app.core.scopes import Scope
 
 router = APIRouter(prefix="" , tags=['Tag'])
 
@@ -43,7 +45,8 @@ async def get_tag(tag_id: UUID, db: AsyncSession = Depends(get_db)):
 async def create_tag(
     data: CreateTagRequest,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_access_dashboard),
+    current_user=Security(get_current_user, scopes=[Scope.ADMIN_DASHBOARD])
+    # current_user=Depends(can_access_dashboard),
 ):
     tag = await service.create_tag(db, data)
     return BaseResponse(
@@ -61,7 +64,8 @@ async def update_tag(
     tag_id: UUID,
     data: UpdateTagRequest,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_access_dashboard),
+    # current_user=Depends(can_access_dashboard),
+    current_user=Security(get_current_user, scopes=[Scope.ADMIN_DASHBOARD])
 ):
     tag = await service.update_tag(db, tag_id, data)
     return BaseResponse(
@@ -78,7 +82,8 @@ async def update_tag(
 async def delete_tag(
     tag_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user=Depends(can_access_dashboard),
+    current_user=Security(get_current_user, scopes=[Scope.ADMIN_DASHBOARD])
+    # current_user=Depends(can_access_dashboard),
 ):
     await service.delete_tag(db, tag_id)
     return BaseResponse(

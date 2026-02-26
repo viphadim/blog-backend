@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from uuid import UUID
@@ -9,6 +9,7 @@ from app.features.comments.schemas import CreateCommentRequest, UpdateCommentReq
 from app.utilities.baseResponse import BaseResponse
 from app.core.dependencies import get_current_user
 from app.features.users.models import User
+from app.core.scopes import Scope
 
 router = APIRouter(prefix="",tags=["Commnent"])
 
@@ -18,31 +19,45 @@ async def get_post_comments(post_id: UUID, db: AsyncSession = Depends(get_db)):
     return BaseResponse(
         success=True, status_code=200, message="Comments retrieved successfully",
         timestamp=datetime.now(),
-        data=[AllCommentResponse.from_comment(c) for c in comments],  # ✅
+        data=[AllCommentResponse.from_comment(c) for c in comments],  #  
     )
 
+# @router.post("/{post_id}/comments", response_model=BaseResponse[CommentResponse])
+# async def create_comment(
+#     post_id: UUID,
+#     data: CreateCommentRequest,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.post("/{post_id}/comments", response_model=BaseResponse[CommentResponse])
 async def create_comment(
     post_id: UUID,
     data: CreateCommentRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.COMMENT_CREATE]),  #  
 ):
     comment = await service.create_comment(db, current_user, post_id, data)
     return BaseResponse(
         success=True, status_code=201, message="Comment created successfully",
         timestamp=datetime.now(),
-        data=CommentResponse.from_comment(comment),  # ✅
+        data=CommentResponse.from_comment(comment),  #  
     )
 
 
-# Owner only
+# # Owner only
+# @router.patch("/comments/{comment_id}", response_model=BaseResponse[CommentResponse])
+# async def update_comment(
+#     comment_id: UUID,
+#     data: UpdateCommentRequest,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.patch("/comments/{comment_id}", response_model=BaseResponse[CommentResponse])
 async def update_comment(
     comment_id: UUID,
     data: UpdateCommentRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.COMMENT_DELETE_OWN]),  #  
 ):
     comment = await service.update_comment(db, current_user, comment_id, data)
     return BaseResponse(
@@ -52,12 +67,19 @@ async def update_comment(
     )
 
 
-# Owner, editor, admin
+# # Owner, editor, admin
+# @router.delete("/comments/{comment_id}")
+# async def delete_comment(
+#     comment_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
+
 @router.delete("/comments/{comment_id}")
 async def delete_comment(
     comment_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.COMMENT_DELETE_OWN]),  #  
 ):
     await service.delete_comment(db, current_user, comment_id)
     return BaseResponse(

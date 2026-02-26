@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from uuid import UUID
@@ -10,15 +10,21 @@ from app.features.posts.schemas import PostResponse
 from app.utilities.baseResponse import BaseResponse
 from app.core.dependencies import get_current_user
 from app.features.users.models import User
+from app.core.scopes import Scope
 
 router = APIRouter()
 
 
 # Get my bookmarks
+# @router.get("/", response_model=BaseResponse[list[BookmarkWithPostResponse]])
+# async def get_my_bookmarks(
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.get("/", response_model=BaseResponse[list[BookmarkWithPostResponse]])
 async def get_my_bookmarks(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.ME_READ]),  # ✅
 ):
     bookmarks = await service.get_user_bookmarks(db, current_user)
     return BaseResponse(
@@ -36,12 +42,18 @@ async def get_my_bookmarks(
     )
 
 
-# Toggle bookmark
+# # Toggle bookmark
+# @router.post("/{post_id}", response_model=BaseResponse[BookmarkStatusResponse])
+# async def toggle_bookmark(
+#     post_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.post("/{post_id}", response_model=BaseResponse[BookmarkStatusResponse])
 async def toggle_bookmark(
     post_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.ME_READ]),  # ✅
 ):
     result = await service.toggle_bookmark(db, current_user, post_id)
     message = "Post bookmarked successfully" if result.bookmarked else "Post unbookmarked successfully"

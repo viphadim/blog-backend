@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime
 from uuid import UUID
@@ -8,9 +8,9 @@ from app.features.posts import service
 from app.features.posts.schemas import CreatePostRequest, UpdatePostRequest, PostResponse
 from app.utilities.baseResponse import BaseResponse
 from app.core.dependencies import get_current_user,get_current_user_optional
-from app.core.permissions import can_publish_post
+# from app.core.permissions import can_publish_post
 from app.features.users.models import User
-
+from app.core.scopes import Scope
 
 router = APIRouter(prefix="" , tags=['Post'])
 
@@ -50,10 +50,15 @@ async def get_posts(
 
 
 #  My posts
+# @router.get("/post/me", response_model=BaseResponse[list[PostResponse]])
+# async def get_my_posts(
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
 @router.get("/post/me", response_model=BaseResponse[list[PostResponse]])
 async def get_my_posts(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.ME_READ]),
 ):
     posts = await service.get_my_posts(db, current_user.id)
     return BaseResponse(
@@ -74,11 +79,18 @@ async def get_post(post_id: UUID, db: AsyncSession = Depends(get_db)):
 
 
 #  Any logged in user — reader auto → author
+# @router.post("/post", response_model=BaseResponse[PostResponse])
+# async def create_post(
+#     data: CreatePostRequest,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
+#   Requires post:create scope
 @router.post("/post", response_model=BaseResponse[PostResponse])
 async def create_post(
     data: CreatePostRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.POST_CREATE]),  #  
 ):
     post = await service.create_post(db, current_user, data)
     return BaseResponse(
@@ -87,13 +99,21 @@ async def create_post(
     )
 
 
-#  Owner, editor, admin
+# #  Owner, editor, admin
+# @router.patch("/post/{post_id}", response_model=BaseResponse[PostResponse])
+# async def update_post(
+#     post_id: UUID,
+#     data: UpdatePostRequest,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
+#   Requires post:edit_own scope
 @router.patch("/post/{post_id}", response_model=BaseResponse[PostResponse])
 async def update_post(
     post_id: UUID,
     data: UpdatePostRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.POST_EDIT_OWN]),  #  
 ):
     post = await service.update_post(db, current_user, post_id, data)
     return BaseResponse(
@@ -102,12 +122,20 @@ async def update_post(
     )
 
 
-#  Editor, admin only
+# #  Editor, admin only
+# @router.patch("/post/{post_id}/publish", response_model=BaseResponse[PostResponse])
+# async def publish_post(
+#     post_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(can_publish_post),
+# ):
+
+#   Requires post:publish scope
 @router.patch("/post/{post_id}/publish", response_model=BaseResponse[PostResponse])
 async def publish_post(
     post_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(can_publish_post),
+    current_user: User = Security(get_current_user, scopes=[Scope.POST_PUBLISH]),  #  
 ):
     post = await service.publish_post(db, current_user, post_id)
     return BaseResponse(
@@ -116,12 +144,19 @@ async def publish_post(
     )
 
 
-#  Editor, admin only
+# #  Editor, admin only
+# @router.patch("/post/{post_id}/unpublish", response_model=BaseResponse[PostResponse])
+# async def unpublish_post(
+#     post_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(can_publish_post),
+# ):
+#   Requires post:publish scope
 @router.patch("/post/{post_id}/unpublish", response_model=BaseResponse[PostResponse])
 async def unpublish_post(
     post_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(can_publish_post),
+    current_user: User = Security(get_current_user, scopes=[Scope.POST_PUBLISH]),  #  
 ):
     post = await service.unpublish_post(db, current_user, post_id)
     return BaseResponse(
@@ -130,12 +165,20 @@ async def unpublish_post(
     )
 
 
-#  Owner or admin
+# #  Owner or admin
+# @router.delete("/post/{post_id}")
+# async def delete_post(
+#     post_id: UUID,
+#     db: AsyncSession = Depends(get_db),
+#     current_user: User = Depends(get_current_user),
+# ):
+
+#   Requires post:delete_own scope
 @router.delete("/post/{post_id}")
 async def delete_post(
     post_id: UUID,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Security(get_current_user, scopes=[Scope.POST_DELETE_OWN]),  #  
 ):
     await service.delete_post(db, current_user, post_id)
     return BaseResponse(
