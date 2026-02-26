@@ -20,6 +20,10 @@ from app.features.notifications.routers import router as notification_router
 from app.features.admin.routers import router as admin_router
 from app.features.uploads.routers import router as upload_router
 
+from alembic.config import Config
+from alembic import command
+from concurrent.futures import ThreadPoolExecutor
+
 app = FastAPI(title="Learning Process ")
 
 #  Exception handlers 
@@ -53,9 +57,20 @@ app.include_router(upload_router, prefix="/uploads", tags=["File Uploads"])
 async def root():
     return {"message": "Hello World!!"}
 
+
+def run_migrations():
+    #   Run synchronously in a thread
+    alembic_cfg = Config("alembic.ini")
+    command.upgrade(alembic_cfg, "head")
+    
 # Create tables on startup
 @app.on_event("startup")
 async def startup():
+
+    loop = asyncio.get_event_loop()
+    with ThreadPoolExecutor() as pool:
+        await loop.run_in_executor(pool, run_migrations)
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
